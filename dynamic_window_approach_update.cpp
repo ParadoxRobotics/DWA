@@ -24,7 +24,7 @@ using Control = std::array<float, 2>;
 class Config{
 public:
   // linear-angular velocity/acceleration bound for the window
-  float max_v = 1.0; // m/s
+  float max_v = 1.9; // m/s
   float min_v = -0.5; // m/s
   float max_w = 40.0 * PI / 180.0; // rad/s
   float max_accel_v = 0.2; // m/s²
@@ -43,10 +43,10 @@ public:
   float speed_cost_gain = 1.0;
 
   // Robot parameters
-  bool circular_robot = true;
+  bool circular_robot = false;
   float robot_radius = 1.0;
   float robot_width = 0.5;
-  float robot_lengh = 1.2;
+  float robot_lengh = 1.0;
 };
 
 
@@ -214,6 +214,28 @@ cv::Point2i cv_offset(
 };
 
 
+// Include center point of your rectangle, size of your rectangle and the degrees of rotation  
+void DrawRotatedRectangle(cv::Mat& image, cv::Point centerPoint, cv::Size rectangleSize, double rotationDegrees)
+{
+    cv::Scalar color = cv::Scalar(255.0, 255.0, 255.0); // white
+    // Create the rotated rectangle
+    cv::RotatedRect rotatedRectangle(centerPoint, rectangleSize, rotationDegrees);
+    // We take the edges that OpenCV calculated for us
+    cv::Point2f vertices2f[4];
+    rotatedRectangle.points(vertices2f);
+    // Convert them so we can use them in a fillConvexPoly
+    cv::Point vertices[4];    
+    for(int i = 0; i < 4; ++i){
+        vertices[i] = vertices2f[i];
+    }
+    // Now we can fill the rotated rectangle with our specified color
+    cv::fillConvexPoly(image,
+                       vertices,
+                       4,
+                       color);
+}
+
+
 int main(){
   State x({{0.0, 0.0, PI/8.0, 0.0, 0.0}});
   Point goal({{10.0,10.0}});
@@ -258,9 +280,14 @@ int main(){
       cv::circle(bg, cv_offset(ltraj[j][0], ltraj[j][1], bg.cols, bg.rows),
                  7, cv::Scalar(0,255,0), -1);
     }
-    cv::circle(bg, cv_offset(x[0], x[1], bg.cols, bg.rows),
-               30, cv::Scalar(0,0,255), 5);
 
+    if (config.circular_robot==false){
+      DrawRotatedRectangle(bg, cv_offset(x[0], x[1], bg.cols, bg.rows), cv::Size2f(50, 30), x[2]);
+    }
+    else{
+      cv::circle(bg, cv_offset(x[0], x[1], bg.cols, bg.rows),
+                30, cv::Scalar(0,0,255), 5);
+    }
 
     cv::arrowedLine(
       bg,
@@ -276,7 +303,6 @@ int main(){
                     7, cv::Scalar(0,0,255), -1);
       }
     }
-
 
     cv::resizeWindow("DWA", 640, 480);
     cv::imshow("DWA", bg);
