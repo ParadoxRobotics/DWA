@@ -39,8 +39,8 @@ public:
   float predict_time = 3.0; // sec
   
   // Control gain 
-  float goal_cost_gain = 1.0;
-  float speed_cost_gain = 1.0;
+  float goal_cost_gain = 0.1;
+  float speed_cost_gain = 0.1;
 
   // Robot parameters
   bool circular_robot = false;
@@ -52,9 +52,9 @@ public:
 
 // predict next robot position Xt given a command Ut
 State motion(State x, Control u, float dt){
-  x[2] += u[1] * dt;
-  x[0] += u[0] * std::cos(x[2]) * dt;
-  x[1] += u[0] * std::sin(x[2]) * dt;
+  x[2] += u[1] * dt; // theta
+  x[0] += u[0] * std::cos(x[2]) * dt; // Y
+  x[1] += u[0] * std::sin(x[2]) * dt; // X
   x[3] = u[0];
   x[4] = u[1];
   return x;
@@ -158,7 +158,6 @@ float calc_to_goal_cost(Traj traj, Point goal, Config config){
   float error = dot_product / (goal_magnitude * traj_magnitude);
   float error_angle = std::acos(error);
   float cost = config.goal_cost_gain * error_angle;
-
   return cost;
 };
 
